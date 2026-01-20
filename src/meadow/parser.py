@@ -217,7 +217,7 @@ def parse_file(path: Path) -> ParsedCode:
     """
     parse a python file and extract classes, functions, and imports
 
-    walks the ast tree to extract class definitions, function definitions,
+    walks: ast tree to extract class definitions, function definitions,
     and import statements
 
     arguments:
@@ -226,9 +226,9 @@ def parse_file(path: Path) -> ParsedCode:
 
     returns:
         `ParsedCode`
-            structured representation of the parsed file
+            structured representation of parsed file
     """
-    content = path.read_text()
+    content = path.read_text(encoding="utf-8")
     tree = ast.parse(content)
 
     imports = []
