@@ -1,10 +1,8 @@
-"""data models for meadoc.
+"""
+data models for meadoc.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+defines dataclasses and enums for representing parsed code, docstrings,
+lint issues, and function/class signatures.
 """
 
 from dataclasses import dataclass
@@ -12,7 +10,8 @@ from enum import Enum
 
 
 class DocstringSection(str, Enum):
-    """enum for docstring sections.
+    """
+    enum for docstring sections.
 
     returns:
         `DocstringSection`
@@ -29,7 +28,8 @@ class DocstringSection(str, Enum):
 
 
 class ErrorCode(str, Enum):
-    """enum for lint error codes.
+    """
+    enum for lint error codes.
 
     returns:
         `ErrorCode`
@@ -43,7 +43,8 @@ class ErrorCode(str, Enum):
 
 @dataclass
 class DocstringItem:
-    """a single item in a docstring section.
+    """
+    a single item in a docstring section.
 
     arguments:
         `name: str`
@@ -64,7 +65,8 @@ class DocstringItem:
 
 @dataclass
 class ParsedDocstring:
-    """parsed representation of a meadow docstring.
+    """
+    parsed representation of a meadow docstring
 
     attributes:
         `short_description: str`
@@ -86,7 +88,7 @@ class ParsedDocstring:
         `usage: str | None`
             optional usage example
         `is_malformed: bool`
-            whether the docstring is malformed
+            whether: docstring is malformed
     """
 
     short_description: str
@@ -103,7 +105,8 @@ class ParsedDocstring:
 
 @dataclass
 class LintIssue:
-    """a linting issue found during checking.
+    """
+    a linting issue found during checking
 
     arguments:
         `code: ErrorCode`
@@ -124,7 +127,8 @@ class LintIssue:
 
 @dataclass
 class FunctionSignature:
-    """extracted function or method signature.
+    """
+    extracted function or method signature
 
     arguments:
         `name: str`
@@ -145,7 +149,8 @@ class FunctionSignature:
 
 @dataclass
 class ClassSignature:
-    """extracted class signature.
+    """
+    extracted class signature
 
     arguments:
         `name: str`
@@ -166,7 +171,8 @@ class ClassSignature:
 
 @dataclass
 class ParsedCode:
-    """result of parsing a Python file.
+    """
+    result of parsing a Python file
 
     arguments:
         `imports: list[str]`

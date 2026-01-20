@@ -13,18 +13,24 @@ from meadow.traversal import find_python_files
 
 
 def main() -> None:
-    """main entry point for meadoc cli.
+    """
+    main entry point for meadoc cli.
 
-    parses arguments and dispatches to appropriate subcommand.
+    parses command-line arguments and dispatches to to appropriate subcommand.
+
+    arguments:
+        `none`
 
     returns:
         `none`
     """
+    from meadow import __version__
+
     parser = argparse.ArgumentParser(
         prog="meadoc",
-        description="a docstring linter and generator for python projects using the meadow docstring format",
+        description="a docstring machine based on typing information for the meadoc docstring format",
     )
-    parser.add_argument("--version", action="version", version=f"meadoc {__version__}")
+    parser.add_argument("--version", action="version", version=__version__)
 
     subparsers = parser.add_subparsers(dest="command", help="available commands")
 
@@ -51,22 +57,35 @@ def main() -> None:
 
 
 def _print_help() -> None:
-    """Print help message for LLMs and new users."""
-    print("meadoc: A docstring linter and generator for Python projects")
+    """
+    print help message for llms and new users.
+
+    displays the main help text with brief descriptions of all available commands.
+    """
+    print("meadoc: a docstring machine based on typing information")
     print("")
     print("Usage:")
-    print("  meadoc format [FILE, ...]")
-    print("  meadoc check [FILE, ...]")
-    print("  meadoc generate [SRC_FILE_OR_DIR, ...]")
-    print("  meadoc toml")
+    print("  meadoc format [FILE, ...]       Generate or update docstrings in file(s)")
+    print("  meadoc check [FILE, ...]       Lint files for docstring issues")
+    print("  meadoc generate [SRC_FILE_OR_DIR, ...]  Generate markdown api documentation")
+    print("  meadoc toml                     Display configuration help")
     print("")
     print("Run 'meadoc <command> --help' for more information on a specific command.")
 
 
 def _add_format_command(subparsers) -> None:
-    """Add format subcommand."""
-    parser = subparsers.add_parser("format", help="Format/create docstrings in given file(s)")
-    parser.add_argument("files", nargs="+", type=str, help="Python files to format")
+    """
+    add format subcommand.
+
+    adds the format command to the parser with options for generating or updating
+    docstrings.
+
+    arguments:
+        `subparsers`
+            argparse subparsers to add command to
+    """
+    parser = subparsers.add_parser("format", help="Generate or update docstrings in file(s)")
+    parser.add_argument("files", nargs="*", type=str, help="Python files (default: all .py files)")
     parser.add_argument(
         "--custom-todoc-message",
         type=str,
@@ -82,22 +101,36 @@ def _add_format_command(subparsers) -> None:
 
 
 def _add_check_command(subparsers) -> None:
-    """Add check subcommand."""
-    parser = subparsers.add_parser("check", help="Lint files and output errors/warnings")
-    parser.add_argument("files", nargs="+", type=str, help="Python files to check")
+    """
+    add check subcommand.
+
+    adds check command to parser for linting files.
+
+    arguments:
+        `subparsers`
+            argparse subparsers to add command to
+    """
+    parser = subparsers.add_parser("check", help="Lint files for docstring issues")
+    parser.add_argument("files", nargs="*", type=str, help="Python files (default: all .py files)")
     _add_shared_options(parser)
 
 
 def _add_generate_command(subparsers) -> None:
-    """Add generate subcommand."""
-    parser = subparsers.add_parser(
-        "generate", help="Generate markdown API reference from source files/directories"
-    )
+    """
+    add generate subcommand.
+
+    adds generate command to parser for creating markdown documentation.
+
+    arguments:
+        `subparsers`
+            argparse subparsers to add command to
+    """
+    parser = subparsers.add_parser("generate", help="Generate markdown API documentation")
     parser.add_argument(
         "src",
-        nargs="+",
+        nargs="*",
         type=str,
-        help="Source files or directories to process",
+        help="Source files or directories (default: all .py files)",
     )
     parser.add_argument(
         "--insert-below-header",
@@ -118,12 +151,28 @@ def _add_generate_command(subparsers) -> None:
 
 
 def _add_toml_command(subparsers) -> None:
-    """Add toml subcommand."""
-    subparsers.add_parser("toml", help="Print help about configuration")
+    """
+    add toml subcommand.
+
+    adds toml command for displaying configuration help.
+
+    arguments:
+        `subparsers`
+            argparse subparsers to add command to
+    """
+    subparsers.add_parser("toml", help="Display configuration help")
 
 
 def _add_shared_options(parser) -> None:
-    """Add shared options to parser."""
+    """
+    add shared options to parser.
+
+    adds common options shared between format, check, and generate commands.
+
+    arguments:
+        `parser`
+            argparse argument parser to add options to
+    """
     parser.add_argument(
         "-n",
         "--ignore-no-docstring",
@@ -150,7 +199,11 @@ def _add_shared_options(parser) -> None:
 
 
 def _handle_format(args) -> None:
-    """Handle format command.
+    """
+    handle format command.
+
+    generates or updates docstrings in specified files, or discovers all python
+    files if none are provided.
 
     arguments:
         `args`
@@ -161,7 +214,11 @@ def _handle_format(args) -> None:
     )
 
     ignore_patterns = args.ignore.split(",") if args.ignore else []
-    files = find_python_files([Path(f) for f in args.files], ignore_patterns)
+
+    if args.files:
+        files = find_python_files([Path(f) for f in args.files], ignore_patterns)
+    else:
+        files = find_python_files([Path.cwd()], ignore_patterns)
 
     changes = 0
     for file_path in files:
@@ -171,14 +228,16 @@ def _handle_format(args) -> None:
 
 
 def _handle_check(args) -> None:
-    """Handle check command.
+    """
+    handle check command.
+
+    lints files for docstring issues, or discovers all python files if
+    none are provided.
 
     arguments:
         `args`
             parsed command-line arguments
     """
-    config = load_config()
-
     cli_ignore = []
     if args.ignore_no_docstring:
         cli_ignore.append("MDW001")
@@ -190,7 +249,11 @@ def _handle_check(args) -> None:
     config = load_config(cli_ignore=cli_ignore)
 
     ignore_patterns = args.ignore.split(",") if args.ignore else []
-    files = find_python_files([Path(f) for f in args.files], ignore_patterns)
+
+    if args.files:
+        files = find_python_files([Path(f) for f in args.files], ignore_patterns)
+    else:
+        files = find_python_files([Path.cwd()], ignore_patterns)
 
     all_issues = []
     for file_path in files:
@@ -205,7 +268,11 @@ def _handle_check(args) -> None:
 
 
 def _handle_generate(args) -> None:
-    """Handle generate command.
+    """
+    handle generate command.
+
+    generates markdown documentation from source files or directories, or
+    discovers all python files if none are provided.
 
     arguments:
         `args`
@@ -224,7 +291,11 @@ def _handle_generate(args) -> None:
     config = load_config(cli_ignore=cli_ignore)
 
     ignore_patterns = args.ignore.split(",") if args.ignore else []
-    files = find_python_files([Path(s) for s in args.src], ignore_patterns)
+
+    if args.src:
+        files = find_python_files([Path(s) for s in args.src], ignore_patterns)
+    else:
+        files = find_python_files([Path.cwd()], ignore_patterns)
 
     output_path = Path(args.output) if args.output else None
 
@@ -238,9 +309,13 @@ def _handle_generate(args) -> None:
 
 
 def _handle_toml() -> None:
-    """Handle toml command.
+    """
+    handle toml command.
 
-    prints help about configuration.
+    prints help about configuration files and supported options.
+
+    arguments:
+        `none`
     """
     print("meadoc Configuration")
     print("")
@@ -258,3 +333,8 @@ def _handle_toml() -> None:
     print("[links]")
     print("  discovered third party modules placed here automatically")
     print('  "tomlkit.TOMLDocument" = "https://..."')
+    print("")
+    print("Ignore directives (in code):")
+    print("  # meadow: ignore           # ignore all errors for this function/class")
+    print("  # meadow: ignore[MDW002]  # ignore only MDW002 for this function/class")
+    print("  # meadow: ignore[MDW001,MDW003]  # ignore multiple error codes")

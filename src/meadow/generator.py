@@ -1,10 +1,8 @@
-"""generator for creating markdown api documentation.
+"""
+generator for creating markdown api documentation.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+parses meadow docstrings and generates markdown documentation with
+table of contents, anchor links, and external references.
 """
 
 import re
@@ -22,10 +20,11 @@ def generate_markdown(
     insert_below_header: str | None = None,
     match_pattern: str | None = None,
 ) -> None:
-    """generate markdown api documentation from source files.
+    """
+    generate markdown api documentation from source files
 
     generates a table of contents and structured markdown documentation for
-    classes and functions matching the optional pattern.
+    classes and functions matching the optional pattern
 
     arguments:
         `files: list[Path]`
@@ -95,7 +94,8 @@ def generate_markdown(
 
 
 def _matches_pattern(name: str, pattern: str | None) -> bool:
-    """check if name matches the given pattern.
+    """
+    check if name matches the given pattern
 
     supports glob patterns (default) and regex patterns (if pattern
     starts with `/`).
@@ -123,10 +123,11 @@ def _matches_pattern(name: str, pattern: str | None) -> bool:
 
 
 def _generate_class_markdown(cls, config: Config) -> list[str]:
-    """generate markdown for a class.
+    """
+    generate markdown for a class
 
-    creates a markdown section with class description, attributes, and methods.
-    applies type links from configuration where available.
+    creates a markdown section with class description, attributes, and methods
+    applies type links from configuration where available
 
     arguments:
         `cls`
@@ -160,14 +161,15 @@ def _generate_class_markdown(cls, config: Config) -> list[str]:
 
 
 def _generate_function_markdown(func: FunctionSignature, config: Config) -> list[str]:
-    """generate markdown for a function.
+    """
+    generate markdown for a function
 
     creates a markdown section with function description, parameters, return
-    type, and raised exceptions.
+    type, and raised exceptions
 
     arguments:
         `func: FunctionSignature`
-            the parsed function signature
+            parsed function signature
         `config: Config`
             configuration options
 
@@ -204,20 +206,19 @@ def _generate_function_markdown(func: FunctionSignature, config: Config) -> list
 
 
 def _get_type_link(type_str: str, config: Config) -> str | None:
-    """get markdown link for a type from config.
+    """
+    get markdown link for a type from config
 
     searches the configuration's links dictionary for a matching pattern and
-    returns a formatted markdown link if found.
+    returns a formatted markdown link if found
 
     arguments:
         `type_str: str`
-            the type annotation string
-        `config: Config`
-            configuration options with links
+            type annotation string
 
     returns:
         `str | None`
-            markdown link if found in config.links, otherwise None
+            markdown link or none if not found in config
     """
     for pattern, url in config.links.items():
         if pattern in type_str:

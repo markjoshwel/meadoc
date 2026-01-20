@@ -1,10 +1,9 @@
-"""parser for extracting signatures and docstrings using stdlib ast.
+"""
+parser for extracting signatures and docstrings using stdlib ast.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+extracts function/class signatures from ast nodes, parses existing docstrings
+into structured sections, and detects raised exceptions and third-party
+references.
 """
 
 import ast
@@ -22,10 +21,11 @@ from meadow.models import (
 
 
 def _type_annotation_to_str(node: ast.AST | None) -> str:
-    """convert ast type annotation to string.
+    """
+    convert ast type annotation to string
 
     handles various ast annotation node types and converts them to string
-    representation.
+    representation
 
     arguments:
         `node: ast.AST | None`
@@ -54,10 +54,11 @@ def _type_annotation_to_str(node: ast.AST | None) -> str:
 
 
 def _extract_raises(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
-    """extract raised exceptions from function.
+    """
+    extract raised exceptions from function
 
     walks the ast tree to find `raise` statements and extracts the
-    exception types being raised.
+    exception types being raised
 
     arguments:
         `node: ast.FunctionDef | ast.AsyncFunctionDef`
@@ -87,10 +88,11 @@ def _extract_raises(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
 
 
 def parse_docstring(docstring: str | None) -> ParsedDocstring:
-    """parse a meadow docstring.
+    """
+    parse a meadow docstring
 
     parses a docstring string into structured sections and items. handles the
-    meadow docstring format with sections like `arguments:`, `returns:`, etc.
+    meadow docstring format with sections like `arguments:`, `returns:`, etc
 
     arguments:
         `docstring: str | None`
@@ -212,10 +214,11 @@ def parse_docstring(docstring: str | None) -> ParsedDocstring:
 
 
 def parse_file(path: Path) -> ParsedCode:
-    """parse a python file and extract classes, functions, and imports.
+    """
+    parse a python file and extract classes, functions, and imports
 
     walks the ast tree to extract class definitions, function definitions,
-    and import statements.
+    and import statements
 
     arguments:
         `path: Path`
@@ -282,10 +285,11 @@ def parse_file(path: Path) -> ParsedCode:
 
 
 def _extract_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> FunctionSignature:
-    """extract function signature from ast node.
+    """
+    extract function signature from ast node
 
     extracts parameter names, types, and defaults, return type, and raised
-    exceptions from a function or async function definition.
+    exceptions from a function or async function definition
 
     arguments:
         `node: ast.FunctionDef | ast.AsyncFunctionDef`
@@ -351,9 +355,10 @@ def _extract_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) ->
 
 
 def get_docstring_from_node(node: ast.AST) -> str | None:
-    """get docstring from ast node.
+    """
+    get docstring from ast node
 
-    returns the docstring for module, class, function, or async function nodes.
+    returns: docstring for module, class, function, or async function nodes
 
     arguments:
         `node: ast.AST`
@@ -369,10 +374,11 @@ def get_docstring_from_node(node: ast.AST) -> str | None:
 
 
 def find_third_party_references(parsed: ParsedCode) -> set[str]:
-    """find third-party module references from parsed code.
+    """
+    find third-party module references from parsed code
 
     scans class base classes to find references to external modules that are not
-    part of the typing module.
+    part of the typing module
 
     arguments:
         `parsed: ParsedCode`

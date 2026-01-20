@@ -1,10 +1,8 @@
-"""file traversal for meadoc.
+"""
+file traversal for meadoc.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+provides file discovery functionality for finding python files with support
+for ignore patterns and glob pattern matching.
 """
 
 from fnmatch import fnmatch
@@ -27,9 +25,10 @@ FIXED_IGNORE_PATTERNS = {
 
 
 def should_ignore(path: Path, ignore_patterns: list[str] | None = None) -> bool:
-    """check if path should be ignored.
+    """
+    check if path should be ignored
 
-    checks both fixed patterns and custom ignore patterns.
+    checks both fixed patterns and custom ignore patterns
 
     arguments:
         `path: Path`
@@ -61,9 +60,10 @@ def find_python_files(
     paths: list[Path] | None = None,
     ignore_patterns: list[str] | None = None,
 ) -> list[Path]:
-    """find python files in given paths.
+    """
+    find python files in given paths
 
-    recursively searches for `.py` files, respecting ignore patterns.
+    recursively searches for `.py` files, respecting ignore patterns
 
     arguments:
         `paths: list[Path] | None = None`
@@ -100,9 +100,10 @@ def find_files(
     paths: list[Path] | None = None,
     ignore_patterns: list[str] | None = None,
 ) -> list[Path]:
-    """find files matching given patterns.
+    """
+    find files matching given patterns
 
-    searches for files matching glob patterns, respecting ignore patterns.
+    searches for files matching glob patterns, respecting ignore patterns
 
     arguments:
         `patterns: list[str]`

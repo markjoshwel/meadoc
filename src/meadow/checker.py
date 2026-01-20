@@ -1,25 +1,88 @@
-"""checker for linting docstrings.
+"""
+checker for linting docstrings.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+checks for missing, malformed, and outdated docstrings in functions
+and classes, with support for per-function ignore directives.
 """
 
 import ast
 from pathlib import Path
+from re import match
 
 from meadow.config import Config
 from meadow.models import ErrorCode, LintIssue
 from meadow.parser import get_docstring_from_node, parse_file, parse_docstring
 
 
+def _parse_ignore_directive(source_line: str) -> list[ErrorCode] | None:
+    """
+    parse meadow ignore directive from source line.
+
+    extracts error codes to ignore from comments like `# meadow: ignore[MDW002]`
+    or `# meadow: ignore` (which ignores all errors).
+
+    arguments:
+        `source_line: str`
+            source code line containing the directive
+
+    returns:
+        `list[ErrorCode] | None`
+            list of error codes to ignore, or none if no specific codes
+            (returns empty list for "ignore all")
+    """
+    directive_match = match(r"#\s*meadow:\s*ignore(?:\[([^\]]+)\])?", source_line.strip())
+    if not directive_match:
+        return None
+
+    codes_part = directive_match.group(1)
+    if codes_part is None:
+        return []
+
+    codes = []
+    for code_str in codes_part.split(","):
+        code_str = code_str.strip()
+        for error_code in ErrorCode:
+            if error_code.value == code_str:
+                codes.append(error_code)
+    return codes
+
+
+def _has_ignore_directive(
+    node: ast.AST,
+    source_lines: list[str],
+) -> tuple[bool, list[ErrorCode]]:
+    """
+    check if node has a meadow ignore directive.
+
+    looks for `# meadow: ignore` comment immediately before the node.
+
+    arguments:
+        `node: ast.AST`
+            ast node to check
+        `source_lines: list[str]`
+            source code lines
+
+    returns:
+        `tuple[bool, list[ErrorCode]]`
+            (has_directive, error_codes_to_ignore)
+    """
+    lineno = getattr(node, "lineno", 0) - 1
+    if lineno < 0 or lineno >= len(source_lines):
+        return False, []
+
+    source_line = source_lines[lineno].strip()
+    ignored_codes = _parse_ignore_directive(source_line)
+    if ignored_codes is None:
+        return False, []
+    return True, ignored_codes or []
+
+
 def check_file(path: Path, config: Config) -> list[LintIssue]:
-    """check a python file for docstring issues.
+    """
+    check a python file for docstring issues.
 
     checks for missing, malformed, and outdated docstrings in functions
-    and classes.
+    and classes, with support for per-function ignore directives.
 
     arguments:
         `path: Path`
@@ -36,6 +99,7 @@ def check_file(path: Path, config: Config) -> list[LintIssue]:
     try:
         parsed = parse_file(path)
         tree = ast.parse(path.read_text())
+        source_lines = path.read_text().splitlines()
     except SyntaxError as e:
         return [
             LintIssue(
@@ -46,11 +110,19 @@ def check_file(path: Path, config: Config) -> list[LintIssue]:
             )
         ]
 
+    checked_nodes = set()
+
     for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            issues.extend(_check_function(node, parsed, path, config))
-        elif isinstance(node, ast.ClassDef):
-            issues.extend(_check_class(node, parsed, path, config))
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            node_key = (type(node).__name__, getattr(node, "lineno", 0))
+            if node_key in checked_nodes:
+                continue
+            checked_nodes.add(node_key)
+
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                issues.extend(_check_function(node, parsed, path, config, source_lines))
+            elif isinstance(node, ast.ClassDef):
+                issues.extend(_check_class(node, parsed, path, config, source_lines))
 
     return sorted(issues, key=lambda i: (i.line, i.column))
 
@@ -60,11 +132,13 @@ def _check_function(
     parsed,
     path: Path,
     config: Config,
+    source_lines: list[str],
 ) -> list[LintIssue]:
-    """check a function for docstring issues.
+    """
+    check a function for docstring issues.
 
     validates docstring presence, format, and parameter matching against
-    function signature.
+    function signature, with support for ignore directives.
 
     arguments:
         `node: ast.FunctionDef | ast.AsyncFunctionDef`
@@ -75,6 +149,8 @@ def _check_function(
             file path (unused in current implementation)
         `config: Config`
             configuration with ignore rules
+        `source_lines: list[str]`
+            source code lines for checking ignore directives
 
     returns:
         `list[LintIssue]`
@@ -82,10 +158,14 @@ def _check_function(
     """
     issues = []
 
+    has_ignore, ignored_codes = _has_ignore_directive(node, source_lines)
+    if has_ignore:
+        return []
+
     docstring = get_docstring_from_node(node)
 
     if not docstring:
-        if ErrorCode.MISSING not in config.extend_ignore:
+        if ErrorCode.MISSING not in config.extend_ignore and ErrorCode.MISSING not in ignored_codes:
             issues.append(
                 LintIssue(
                     code=ErrorCode.MISSING,
@@ -99,7 +179,10 @@ def _check_function(
     parsed_doc = parse_docstring(docstring)
 
     if parsed_doc.is_malformed:
-        if ErrorCode.MALFORMED not in config.extend_ignore:
+        if (
+            ErrorCode.MALFORMED not in config.extend_ignore
+            and ErrorCode.MALFORMED not in ignored_codes
+        ):
             issues.append(
                 LintIssue(
                     code=ErrorCode.MALFORMED,
@@ -109,7 +192,7 @@ def _check_function(
                 )
             )
 
-    if ErrorCode.OUTDATED not in config.extend_ignore:
+    if ErrorCode.OUTDATED not in config.extend_ignore and ErrorCode.OUTDATED not in ignored_codes:
         signature = None
         for func in parsed.functions:
             if func.name == node.name:
@@ -138,11 +221,13 @@ def _check_class(
     parsed,
     path: Path,
     config: Config,
+    source_lines: list[str],
 ) -> list[LintIssue]:
-    """check a class for docstring issues.
+    """
+    check a class for docstring issues.
 
     validates docstring presence, format, and attribute matching against
-    class definition.
+    class definition, with support for ignore directives.
 
     arguments:
         `node: ast.ClassDef`
@@ -153,6 +238,8 @@ def _check_class(
             file path (unused in current implementation)
         `config: Config`
             configuration with ignore rules
+        `source_lines: list[str]`
+            source code lines for checking ignore directives
 
     returns:
         `list[LintIssue]`
@@ -160,10 +247,14 @@ def _check_class(
     """
     issues = []
 
+    has_ignore, ignored_codes = _has_ignore_directive(node, source_lines)
+    if has_ignore:
+        return []
+
     docstring = get_docstring_from_node(node)
 
     if not docstring:
-        if ErrorCode.MISSING not in config.extend_ignore:
+        if ErrorCode.MISSING not in config.extend_ignore and ErrorCode.MISSING not in ignored_codes:
             issues.append(
                 LintIssue(
                     code=ErrorCode.MISSING,
@@ -177,7 +268,10 @@ def _check_class(
     parsed_doc = parse_docstring(docstring)
 
     if parsed_doc.is_malformed:
-        if ErrorCode.MALFORMED not in config.extend_ignore:
+        if (
+            ErrorCode.MALFORMED not in config.extend_ignore
+            and ErrorCode.MALFORMED not in ignored_codes
+        ):
             issues.append(
                 LintIssue(
                     code=ErrorCode.MALFORMED,
@@ -187,7 +281,7 @@ def _check_class(
                 )
             )
 
-    if ErrorCode.OUTDATED not in config.extend_ignore:
+    if ErrorCode.OUTDATED not in config.extend_ignore and ErrorCode.OUTDATED not in ignored_codes:
         class_sig = None
         for cls in parsed.classes:
             if cls.name == node.name:
@@ -210,7 +304,7 @@ def _check_class(
 
     for item in node.body:
         if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            issues.extend(_check_function(item, parsed, path, config))
+            issues.extend(_check_function(item, parsed, path, config, source_lines))
 
     return issues
 

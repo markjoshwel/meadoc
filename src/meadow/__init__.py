@@ -1,3 +1,5 @@
-"""Meadoc: A docstring linter and generator for Python projects."""
+"""
+meadoc: a docstring machine based on typing information for the meadoc docstring format.
+"""
 
-__version__ = "0.1.0"
+__version__ = "2026.1.21"

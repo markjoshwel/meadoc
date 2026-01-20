@@ -1,10 +1,8 @@
-"""configuration handling for meadoc.
+"""
+configuration handling for meadoc.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+loads configuration from multiple sources (cli, pyproject.toml, meadow.toml)
+with support for precedence and merging of ignore rules.
 """
 
 from dataclasses import dataclass, field
@@ -16,7 +14,8 @@ import tomllib
 
 @dataclass
 class Config:
-    """configuration for meadoc.
+    """
+    configuration for meadoc
 
     attributes:
         `extend_ignore: list[str]`
@@ -37,9 +36,10 @@ class Config:
 
 
 def parse_extend_ignore(value: Any) -> list[str]:
-    """parse extend-ignore configuration value.
+    """
+    parse extend-ignore configuration value
 
-    handles string (comma-separated or single), list, or other types.
+    handles string (comma-separated or single), list, or other types
 
     arguments:
         `value: Any`
@@ -59,9 +59,10 @@ def parse_extend_ignore(value: Any) -> list[str]:
 
 
 def load_pyproject_config(path: Path | None = None) -> Config:
-    """load configuration from pyproject.toml.
+    """
+    load configuration from pyproject.toml
 
-    reads the `[tool.meadoc]` section from pyproject.toml.
+    reads: `[tool.meadoc]` section from pyproject.toml
 
     arguments:
         `path: Path | None = None`
@@ -95,9 +96,10 @@ def load_pyproject_config(path: Path | None = None) -> Config:
 
 
 def load_meadow_config(path: Path | None = None) -> Config:
-    """load configuration from meadow.toml.
+    """
+    load configuration from meadow.toml
 
-    reads configuration from meadow.toml in the specified directory.
+    reads configuration from meadow.toml in the specified directory
 
     arguments:
         `path: Path | None = None`
@@ -137,7 +139,8 @@ def merge_configs(
     cli_ignore: list[str] | None = None,
     cli_todoc_message: str | None = None,
 ) -> Config:
-    """merge configurations with cli taking precedence.
+    """
+    merge configurations with cli taking precedence
 
     merges configurations in priority order:
     1. cli flags (highest)
@@ -193,10 +196,11 @@ def load_config(
     cli_todoc_message: str | None = None,
     path: Path | None = None,
 ) -> Config:
-    """load and merge all configuration sources.
+    """
+    load and merge all configuration sources
 
     loads configuration from all sources and merges them with cli taking
-    precedence.
+    precedence
 
     arguments:
         `cli_ignore: list[str] | None = None`
@@ -220,9 +224,10 @@ def load_config(
 
 
 def write_meadow_config(path: Path, config: Config) -> None:
-    """write configuration to meadow.toml.
+    """
+    write configuration to meadow.toml
 
-    writes the given config to meadow.toml at the specified path.
+    writes the given config to meadow.toml at the specified path
 
     arguments:
         `path: Path`

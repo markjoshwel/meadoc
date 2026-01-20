@@ -1,10 +1,8 @@
-"""formatter for creating and updating meadow docstrings.
+"""
+formatter for creating and updating meadow docstrings.
 
-arguments:
-    `none`
-
-returns:
-    `none`
+generates new docstrings with todoc placeholders, and updates existing
+docstrings while preserving descriptions. handles malformed docstrings.
 """
 
 import ast
@@ -16,10 +14,11 @@ from meadow.parser import parse_file
 
 
 def format_file(path: Path, config: Config, fix_malformed: bool = False) -> int:
-    """format docstrings in a python file.
+    """
+    format docstrings in a python file
 
-    reads the file, parses it, and updates or creates docstrings in the
-    meadow format. preserves existing descriptions where possible.
+    reads file, parses it, and updates or creates docstrings in the
+    meadow format. preserves existing descriptions where possible
 
     arguments:
         `path: Path`
@@ -31,7 +30,7 @@ def format_file(path: Path, config: Config, fix_malformed: bool = False) -> int:
 
     returns:
         `int`
-            number of changes made to the file
+            number of changes made to file
     """
     content = path.read_text()
     parsed = parse_file(path)
@@ -53,10 +52,11 @@ def _process_tree(
     config: Config,
     fix_malformed: bool,
 ) -> str:
-    """process ast tree and update docstrings.
+    """
+    process ast tree and update docstrings
 
     walks the ast tree to find functions and classes, then generates or
-    updates their docstrings.
+    updates their docstrings
 
     arguments:
         `tree: ast.Module`
@@ -109,7 +109,8 @@ def _process_tree(
 
 
 def _update_docstring(lines: list[str], node, new_docstring: str) -> list[str]:
-    """Update docstring in lines array.
+    """
+    update docstring in lines array
 
     arguments:
         `lines: list[str]`
@@ -149,7 +150,8 @@ def _update_docstring(lines: list[str], node, new_docstring: str) -> list[str]:
 
 
 def _generate_class_docstring(class_sig, config: Config) -> str:
-    """Generate a meadow docstring for a class.
+    """
+    generate a meadow docstring for a class
 
     arguments:
         `class_sig`
@@ -174,7 +176,8 @@ def _generate_class_docstring(class_sig, config: Config) -> str:
 
 
 def _generate_function_docstring(func_sig: FunctionSignature, config: Config) -> str:
-    """Generate a meadow docstring for a function.
+    """
+    generate a meadow docstring for a function
 
     arguments:
         `func_sig: FunctionSignature`
