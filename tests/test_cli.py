@@ -1,8 +1,6 @@
 """Tests for meadoc CLI."""
 
 import subprocess
-import tempfile
-from pathlib import Path
 
 
 def test_cli_help():

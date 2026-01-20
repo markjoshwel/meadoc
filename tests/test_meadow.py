@@ -5,7 +5,8 @@ from pathlib import Path
 from meadow.config import parse_extend_ignore, load_config
 from meadow.models import ErrorCode
 from meadow.traversal import should_ignore
-from meadow.parser import parse_file, _parse_docstring
+from meadow.parser import parse_file
+from meadow.parser import parse_docstring
 from meadow.checker import check_file
 
 
@@ -58,10 +59,10 @@ def test_should_ignore_with_patterns():
 
 
 def test_parse_docstring_simple():
-    """Test parsing a simple docstring."""
+    """test parsing a simple docstring."""
     docstring = "Short description."
 
-    result = _parse_docstring(docstring)
+    result = parse_docstring(docstring)
 
     assert result.short_description == "Short description."
     assert result.is_malformed is False
@@ -82,7 +83,7 @@ def test_parse_docstring_with_sections():
             result
     """
 
-    result = _parse_docstring(docstring)
+    result = parse_docstring(docstring)
 
     assert result.short_description == "Short description."
     assert "Longer description here" in result.long_description
@@ -93,7 +94,7 @@ def test_parse_docstring_with_sections():
 
 def test_parse_docstring_empty():
     """Test parsing an empty docstring."""
-    result = _parse_docstring(None)
+    result = parse_docstring(None)
 
     assert result.is_malformed is True
     assert result.short_description == ""
@@ -192,7 +193,7 @@ def test_parse_docstring_with_methods():
             description of method2
     """
 
-    result = _parse_docstring(docstring)
+    result = parse_docstring(docstring)
 
     assert len(result.methods) == 2
     assert "method1" in result.methods[0].type_annotation
@@ -210,7 +211,7 @@ def test_parse_docstring_with_raises():
             when type is wrong
     """
 
-    result = _parse_docstring(docstring)
+    result = parse_docstring(docstring)
 
     assert len(result.raises) == 2
     assert "ValueError" in result.raises
