@@ -5,7 +5,7 @@ from pathlib import Path
 
 from meadow.config import Config
 from meadow.models import ErrorCode, LintIssue
-from meadow.parser import get_docstring_from_node, parse_file, _parse_docstring
+from meadow.parser import get_docstring_from_node, parse_file, parse_docstring
 
 
 def check_file(path: Path, config: Config) -> list[LintIssue]:
@@ -57,7 +57,7 @@ def _check_function(
             )
         return issues
 
-    parsed_doc = _parse_docstring(docstring)
+    parsed_doc = parse_docstring(docstring)
 
     if parsed_doc.is_malformed:
         if ErrorCode.MALFORMED not in config.extend_ignore:
@@ -117,7 +117,7 @@ def _check_class(
             )
         return issues
 
-    parsed_doc = _parse_docstring(docstring)
+    parsed_doc = parse_docstring(docstring)
 
     if parsed_doc.is_malformed:
         if ErrorCode.MALFORMED not in config.extend_ignore:

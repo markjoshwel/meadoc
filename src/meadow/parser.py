@@ -55,7 +55,7 @@ def _extract_raises(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     return raises
 
 
-def _parse_docstring(docstring: str | None) -> ParsedDocstring:
+def parse_docstring(docstring: str | None) -> ParsedDocstring:
     """Parse a meadow docstring."""
     if not docstring:
         return ParsedDocstring(
