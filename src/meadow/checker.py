@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 
 from meadow.config import Config
-from meadow.models import ErrorCode, FunctionSignature, LintIssue
+from meadow.models import ErrorCode, LintIssue
 from meadow.parser import get_docstring_from_node, parse_file, _parse_docstring
 
 

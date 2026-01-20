@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from pathlib import Path
 
 from meadow import __version__
 from meadow.checker import check_file, format_issue

@@ -7,114 +7,36 @@ a docstring machine based on typing information
 - [usage](#usage)
   - [linting](#linting)
   - [generating](#generating)
+  - [documentation](#documentation)
+  - [configuration](#configuration)
   - [global options](#global-options)
 
-features:
+## features:
 
 - command-line docstring linter
-  - will generate docstrings for you by filling in with `TODOC: fill in (meadow)`
-  - will ~~yell~~ gently remind you if a function signature changes
+  - will generate docstrings for you by filling in with `TODOC: (meadow)`
+  - will gently remind you if a function signature changes
     or a docstring is considered malformed by meadow
 
 - generates markdown output for an easy api reference
   - either to an output file
   - or inserts output into another file with a given header
 
-a real-world example of the docstring format I use, hereby just generically called the "meadow"
-docstring format for ease of typing:
-
-```python
-from typing import NamedTuple, Generic, TypeVar
-
-ResultType = TypeVar("ResultType")
-
-class Result(NamedTuple, Generic[ResultType]):
-    """
-    typing.NamedTuple representing a result for safe value retrieval
-
-    attributes:
-        `value: ResultType`
-            value to return or fallback value if erroneous
-        `error: BaseException | None = None`
-            exception if any
-
-    methods:
-        `def __bool__(self) -> bool: ...`
-            method for boolean comparison for exception safety
-        `def get(self) -> ResultType: ...`
-            method that raises or returns an error if the Result is erroneous
-        `def cry(self, string: bool = False) -> str: ...`
-            method that returns the result value or raises an error
-    """
-
-    value: ResultType
-    error: BaseException | None = None
-
-    def __bool__(self) -> bool:
-        """
-        method for boolean comparison for exception safety
-        
-        returns: `bool`
-            that returns True if `self.error` is not None
-        """
-        return self.error is None
-
-    def cry(self, string: bool = False) -> str:  # noqa: FBT001, FBT002
-        """
-        method that raises or returns an error if the Result is erroneous
-
-        arguments:
-            `string: bool = False`
-                if `self.error` is an Exception, returns it as a string error message
-        
-        returns: `str`
-            returns `self.error` if it is a string, or returns an empty string if
-            `self.error` is None
-        """
-
-        if isinstance(self.error, BaseException):
-            if string:
-                message = f"{self.error}"
-                name = self.error.__class__.__name__
-                return f"{message} ({name})" if (message != "") else name
-
-            raise self.error
-
-        if isinstance(self.error, str):
-            return self.error
-
-        return ""
-
-    def get(self) -> ResultType:
-        """
-        method that returns the result value or raises an error
-
-        returns: `ResultType`
-            returns `self.value` if `self.error` is None
-
-        raises: `BaseException`
-            if `self.error` is not None
-        """
-        if self.error is not None:
-            raise self.error
-        return self.value
-```
-
 ## the format
 
-why another one? it's really just for me, but I think it's ~~a good~~ an okay-ish format
+why another one? it's really just for me, but I think it's an okay-ish format
 
 - it's easy and somewhat intuitive to read and write, especially because it's just plaintext
 - it closely follows python syntax where it should, which includes type annotations
 
 **a bonus:** it works:
-- okay-ish on PyCham
+- okay-ish on PyCharm
 - decent-ish on Zed
 - slightly better on Visual Code
 
 the format goes generally like:
 
-```text
+```
 <short one line description>
 
 [<more detailed description if needed>]
@@ -172,8 +94,7 @@ section (but cross-ide compatibility is finicky, especially with pycharm)
 
     ```python
     class ThirdPartyExample(Exception):
-        """
-        blah blah
+        """blah blah
     
         attributes:
             `field_day: external.ExternalClass`
@@ -211,6 +132,7 @@ section (but cross-ide compatibility is finicky, especially with pycharm)
                 ...
     
         returns: `object`
+            ...
         """
         ...
     ```
@@ -232,14 +154,14 @@ from reading pretext
     def difference_between_document(
         self, incoming_document: TOMLDocument
     ) -> Difference:
-        """
-        returns a `tomlantic.Difference` namedtuple object of the incoming and
+        """returns a `tomlantic.Difference` namedtuple object of the incoming and
         outgoing fields that were changed between the model and the comparison document
     
         arguments:
             `incoming_document: tomlkit.TOMLDocument`
     
         returns: `tomlantic.Difference`
+            ...
         """
         ...
     ```
@@ -249,25 +171,25 @@ from reading pretext
 ### linting
 
 ```text
-$ meadow colette.py
-colette.py:110:1: MDW001: function 'load_config' has no docstring
-colette.py:202:1: MDW002: function 'read_from_disk' is outdated
-colette.py:273:1: MDW003: function 'dump_to_disk' has a malformed docstring (fixable by passing --fix-malformed to 'meadow generate')
+$ meadoc check file.py
+file.py:10:1: MDW001: function 'load_config' has no docstring
+file.py:20:1: MDW002: function 'read_from_disk' is outdated
+file.py:30:1: MDW003: function 'dump_to_disk' has a malformed docstring
 ```
 
 #### behaviour
 
-with passing only a file to it, meadow will lint the file and output any errors or warnings
+with passing only a file to it, meadoc will lint the file and output any errors or warnings
 
-if any errors exist, meadow will exit with a non-zero status code
+if any errors exist, meadoc will exit with a non-zero status code
 
 ### generating
 
-the subcommand `generate` will help you generate docstrings for your functions
+the subcommand `format` will help you generate docstrings for your functions
 
 ```text
-$ meadow generate colette.py
-colette.py: generated 1 new docstring, updated 1 docstring, and skipped 1 malformed docstring (fixable by passing --fix-malformed)
+$ meadoc format file.py
+file.py: generated 1 new docstring, updated 1 docstring, and skipped 1 malformed docstring
 ```
 
 #### behaviour
@@ -290,16 +212,84 @@ newfound return types and raised exception classes will update the existing sect
   will attempt to fix any malformed docstrings by adding the `TODOC: (meadow)` string
   to the end of the docstring
 
-### global options
+### documentation
+
+the subcommand `generate` will help you generate markdown documentation
+
+```text
+$ meadoc generate src/ --output API_REFERENCE.md
+```
+
+#### behaviour
+
+- generates a table of contents with all items
+- generates markdown for each class and function
+- uses meadow.toml for external documentation links
+- filters by `--match` pattern (glob or regex)
+
+#### options
+
+- `--output FILE`  
+  write output to file instead of stdout
+
+- `--insert-below-header HEADER_TEXT`  
+  insert output into file below this header (error if not found)
+
+- `--match MATCH_PATTERN`  
+  filter functions/classes by name (glob or regex)
+
+## configuration
+
+### Priority Order
+1. CLI flags (highest)
+2. pyproject.toml `[tool.meadoc]` section (read-only)
+3. meadow.toml file (lowest)
+
+### Configuration Keys
+
+```toml
+extend-ignore = ["MDW001", "MDW002"]  # or "MDW001" or "MDW001,MDW002"
+
+[links]
+# discovered third party modules placed here automatically
+"tomlkit.TOMLDocument" = "https://..."
+```
+
+## global options
 
 - `-n, --ignore-no-docstring`  
   will ignore any missing docstrings
 
 - `-o, --ignore-outdated`  
-  will ignore any malformed docstrings
+  will ignore any outdated docstrings
 
 - `-m, --ignore-malformed`  
   will ignore any malformed docstrings
 
 - `--ignore IGNORE`  
   a comma-separated list of globs to match against and ignore if matched during file traversal
+
+## installation
+
+```bash
+uv pip install meadoc
+```
+
+## development
+
+```bash
+# run tests
+uv run pytest
+
+# run linting
+uv run ruff check src/
+
+# auto-fix linting issues
+uv run ruff check --fix src/
+
+# type check
+uv run mypy src/
+
+# format code
+uv run ruff format src/
+```
