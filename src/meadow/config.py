@@ -1,4 +1,11 @@
-"""Configuration handling for meadoc."""
+"""configuration handling for meadoc.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,7 +16,20 @@ import tomllib
 
 @dataclass
 class Config:
-    """Configuration for meadoc."""
+    """configuration for meadoc.
+
+    attributes:
+        `extend_ignore: list[str]`
+            list of error codes to ignore
+        `links: dict[str, str]`
+            mapping of external types to documentation urls
+        `todoc_message: str`
+            placeholder text for undocumented items
+
+    returns:
+        `Config`
+            config instance
+    """
 
     extend_ignore: list[str] = field(default_factory=list)
     links: dict[str, str] = field(default_factory=dict)
@@ -17,7 +37,18 @@ class Config:
 
 
 def parse_extend_ignore(value: Any) -> list[str]:
-    """Parse extend-ignore configuration value."""
+    """parse extend-ignore configuration value.
+
+    handles string (comma-separated or single), list, or other types.
+
+    arguments:
+        `value: Any`
+            configuration value to parse
+
+    returns:
+        `list[str]`
+            list of error code strings
+    """
     if isinstance(value, str):
         if "," in value:
             return [code.strip() for code in value.split(",") if code.strip()]
@@ -28,7 +59,18 @@ def parse_extend_ignore(value: Any) -> list[str]:
 
 
 def load_pyproject_config(path: Path | None = None) -> Config:
-    """Load configuration from pyproject.toml."""
+    """load configuration from pyproject.toml.
+
+    reads the `[tool.meadoc]` section from pyproject.toml.
+
+    arguments:
+        `path: Path | None = None`
+            path to pyproject.toml, defaults to current directory
+
+    returns:
+        `Config`
+            loaded configuration, or empty config if file not found
+    """
     if path is None:
         path = Path.cwd()
 
@@ -53,7 +95,18 @@ def load_pyproject_config(path: Path | None = None) -> Config:
 
 
 def load_meadow_config(path: Path | None = None) -> Config:
-    """Load configuration from meadow.toml."""
+    """load configuration from meadow.toml.
+
+    reads configuration from meadow.toml in the specified directory.
+
+    arguments:
+        `path: Path | None = None`
+            path to meadow.toml, defaults to current directory
+
+    returns:
+        `Config`
+            loaded configuration, or empty config if file not found
+    """
     if path is None:
         path = Path.cwd()
 
@@ -84,7 +137,27 @@ def merge_configs(
     cli_ignore: list[str] | None = None,
     cli_todoc_message: str | None = None,
 ) -> Config:
-    """Merge configurations with CLI taking precedence."""
+    """merge configurations with cli taking precedence.
+
+    merges configurations in priority order:
+    1. cli flags (highest)
+    2. pyproject.toml
+    3. meadow.toml (lowest)
+
+    arguments:
+        `pyproject_config: Config`
+            configuration from pyproject.toml
+        `meadow_config: Config`
+            configuration from meadow.toml
+        `cli_ignore: list[str] | None = None`
+            cli error codes to ignore
+        `cli_todoc_message: str | None = None`
+            cli todoc message override
+
+    returns:
+        `Config`
+            merged configuration
+    """
     config = Config()
 
     if pyproject_config.extend_ignore:
@@ -120,7 +193,23 @@ def load_config(
     cli_todoc_message: str | None = None,
     path: Path | None = None,
 ) -> Config:
-    """Load and merge all configuration sources."""
+    """load and merge all configuration sources.
+
+    loads configuration from all sources and merges them with cli taking
+    precedence.
+
+    arguments:
+        `cli_ignore: list[str] | None = None`
+            cli error codes to ignore
+        `cli_todoc_message: str | None = None`
+            cli todoc message override
+        `path: Path | None = None`
+            path to config directory, defaults to current directory
+
+    returns:
+        `Config`
+            merged configuration
+    """
     if path is None:
         path = Path.cwd()
 
@@ -131,7 +220,19 @@ def load_config(
 
 
 def write_meadow_config(path: Path, config: Config) -> None:
-    """Write configuration to meadow.toml."""
+    """write configuration to meadow.toml.
+
+    writes the given config to meadow.toml at the specified path.
+
+    arguments:
+        `path: Path`
+            path to write meadow.toml
+        `config: Config`
+            configuration to write
+
+    returns:
+        `none`
+    """
     toml_lines = []
 
     toml_lines.append(f"extend-ignore = {config.extend_ignore if config.extend_ignore else []}")

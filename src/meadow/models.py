@@ -1,11 +1,23 @@
-"""Data models for meadoc."""
+"""data models for meadoc.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 from dataclasses import dataclass
 from enum import Enum
 
 
 class DocstringSection(str, Enum):
-    """Enum for docstring sections."""
+    """enum for docstring sections.
+
+    returns:
+        `DocstringSection`
+            enum member value as string
+    """
 
     ATTRIBUTES = "attributes"
     ARGUMENTS = "arguments"
@@ -17,7 +29,12 @@ class DocstringSection(str, Enum):
 
 
 class ErrorCode(str, Enum):
-    """Enum for lint error codes."""
+    """enum for lint error codes.
+
+    returns:
+        `ErrorCode`
+            enum member value as string
+    """
 
     MISSING = "MDW001"
     OUTDATED = "MDW002"
@@ -26,7 +43,18 @@ class ErrorCode(str, Enum):
 
 @dataclass
 class DocstringItem:
-    """A single item in a docstring section."""
+    """a single item in a docstring section.
+
+    arguments:
+        `name: str`
+            name of the item
+        `type_annotation: str`
+            type annotation string
+        `description: str`
+            description text
+        `default_value: str | None = None`
+            optional default value
+    """
 
     name: str
     type_annotation: str
@@ -36,7 +64,30 @@ class DocstringItem:
 
 @dataclass
 class ParsedDocstring:
-    """Parsed representation of a meadow docstring."""
+    """parsed representation of a meadow docstring.
+
+    attributes:
+        `short_description: str`
+            short one-line description
+        `long_description: str`
+            longer detailed description
+        `attributes: list[DocstringItem]`
+            attribute items
+        `arguments: list[DocstringItem]`
+            argument items
+        `methods: list[DocstringItem]`
+            method items
+        `returns_type: str | None`
+            return type annotation
+        `returns_description: str`
+            return value description
+        `raises: dict[str, str]`
+            raised exceptions mapping
+        `usage: str | None`
+            optional usage example
+        `is_malformed: bool`
+            whether the docstring is malformed
+    """
 
     short_description: str
     long_description: str
@@ -52,7 +103,18 @@ class ParsedDocstring:
 
 @dataclass
 class LintIssue:
-    """A linting issue found during checking."""
+    """a linting issue found during checking.
+
+    arguments:
+        `code: ErrorCode`
+            error code
+        `line: int`
+            line number
+        `column: int`
+            column number
+        `message: str`
+            error message
+    """
 
     code: ErrorCode
     line: int
@@ -62,7 +124,18 @@ class LintIssue:
 
 @dataclass
 class FunctionSignature:
-    """Extracted function or method signature."""
+    """extracted function or method signature.
+
+    arguments:
+        `name: str`
+            function name
+        `parameters: dict[str, str]`
+            parameter mapping
+        `return_type: str | None`
+            return type annotation
+        `raises: list[str]`
+            list of raised exceptions
+    """
 
     name: str
     parameters: dict[str, str]
@@ -72,7 +145,18 @@ class FunctionSignature:
 
 @dataclass
 class ClassSignature:
-    """Extracted class signature."""
+    """extracted class signature.
+
+    arguments:
+        `name: str`
+            class name
+        `bases: list[str]`
+            base classes
+        `attributes: dict[str, str]`
+            attribute mapping
+        `methods: list[FunctionSignature]`
+            list of methods
+    """
 
     name: str
     bases: list[str]
@@ -82,7 +166,16 @@ class ClassSignature:
 
 @dataclass
 class ParsedCode:
-    """Result of parsing a Python file."""
+    """result of parsing a Python file.
+
+    arguments:
+        `imports: list[str]`
+            list of imports
+        `classes: list[ClassSignature]`
+            list of classes
+        `functions: list[FunctionSignature]`
+            list of functions
+    """
 
     imports: list[str]
     classes: list[ClassSignature]

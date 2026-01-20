@@ -1,4 +1,11 @@
-"""File traversal for meadoc."""
+"""file traversal for meadoc.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 from fnmatch import fnmatch
 from pathlib import Path
@@ -15,11 +22,25 @@ FIXED_IGNORE_PATTERNS = {
     ".tox",
     "build",
     "dist",
+    "*.egg-info",
 }
 
 
 def should_ignore(path: Path, ignore_patterns: list[str] | None = None) -> bool:
-    """Check if path should be ignored."""
+    """check if path should be ignored.
+
+    checks both fixed patterns and custom ignore patterns.
+
+    arguments:
+        `path: Path`
+            path to check
+        `ignore_patterns: list[str] | None = None`
+            additional ignore patterns
+
+    returns:
+        `bool`
+            true if path should be ignored
+    """
     if ignore_patterns is None:
         ignore_patterns = []
 
@@ -40,7 +61,20 @@ def find_python_files(
     paths: list[Path] | None = None,
     ignore_patterns: list[str] | None = None,
 ) -> list[Path]:
-    """Find Python files in given paths."""
+    """find python files in given paths.
+
+    recursively searches for `.py` files, respecting ignore patterns.
+
+    arguments:
+        `paths: list[Path] | None = None`
+            paths to search, defaults to current directory
+        `ignore_patterns: list[str] | None = None`
+            additional ignore patterns
+
+    returns:
+        `list[Path]`
+            sorted list of python file paths
+    """
     if paths is None:
         paths = [Path.cwd()]
 
@@ -66,7 +100,22 @@ def find_files(
     paths: list[Path] | None = None,
     ignore_patterns: list[str] | None = None,
 ) -> list[Path]:
-    """Find files matching given patterns."""
+    """find files matching given patterns.
+
+    searches for files matching glob patterns, respecting ignore patterns.
+
+    arguments:
+        `patterns: list[str]`
+            glob patterns to match
+        `paths: list[Path] | None = None`
+            paths to search, defaults to current directory
+        `ignore_patterns: list[str] | None = None`
+            additional ignore patterns
+
+    returns:
+        `list[Path]`
+            sorted list of matched file paths
+    """
     if paths is None:
         paths = [Path.cwd()]
 
