@@ -35,7 +35,7 @@ def check_file(path: Path, config: Config) -> list[LintIssue]:
 
 
 def _check_function(
-    node: ast.FunctionDef,
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
     parsed,
     path: Path,
     config: Config,
