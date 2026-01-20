@@ -13,17 +13,20 @@ from meadow.traversal import find_python_files
 
 
 def main() -> None:
-    """Main entry point for meadoc CLI.
+    """main entry point for meadoc cli.
 
     parses arguments and dispatches to appropriate subcommand.
+
+    returns:
+        `none`
     """
     parser = argparse.ArgumentParser(
         prog="meadoc",
-        description="A docstring linter and generator for Python projects using the meadow docstring format",
+        description="a docstring linter and generator for python projects using the meadow docstring format",
     )
     parser.add_argument("--version", action="version", version=f"meadoc {__version__}")
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(dest="command", help="available commands")
 
     _add_format_command(subparsers)
     _add_check_command(subparsers)

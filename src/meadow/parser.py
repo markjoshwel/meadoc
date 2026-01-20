@@ -1,4 +1,11 @@
-"""Parser for extracting signatures and docstrings using stdlib ast."""
+"""parser for extracting signatures and docstrings using stdlib ast.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 import ast
 from collections import defaultdict
@@ -15,7 +22,19 @@ from meadow.models import (
 
 
 def _type_annotation_to_str(node: ast.AST | None) -> str:
-    """Convert AST type annotation to string."""
+    """convert ast type annotation to string.
+
+    handles various ast annotation node types and converts them to string
+    representation.
+
+    arguments:
+        `node: ast.AST | None`
+            ast node to convert
+
+    returns:
+        `str`
+            string representation of the type annotation
+    """
     if node is None:
         return ""
     if isinstance(node, ast.Name):
@@ -35,7 +54,19 @@ def _type_annotation_to_str(node: ast.AST | None) -> str:
 
 
 def _extract_raises(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
-    """Extract raised exceptions from function."""
+    """extract raised exceptions from function.
+
+    walks the ast tree to find `raise` statements and extracts the
+    exception types being raised.
+
+    arguments:
+        `node: ast.FunctionDef | ast.AsyncFunctionDef`
+            function or async function node
+
+    returns:
+        `list[str]`
+            list of exception type names
+    """
     raises = []
 
     for child in ast.walk(node):
@@ -56,7 +87,19 @@ def _extract_raises(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
 
 
 def parse_docstring(docstring: str | None) -> ParsedDocstring:
-    """Parse a meadow docstring."""
+    """parse a meadow docstring.
+
+    parses a docstring string into structured sections and items. handles the
+    meadow docstring format with sections like `arguments:`, `returns:`, etc.
+
+    arguments:
+        `docstring: str | None`
+            docstring text to parse
+
+    returns:
+        `ParsedDocstring`
+            structured representation of the parsed docstring
+    """
     if not docstring:
         return ParsedDocstring(
             short_description="",
@@ -169,7 +212,19 @@ def parse_docstring(docstring: str | None) -> ParsedDocstring:
 
 
 def parse_file(path: Path) -> ParsedCode:
-    """Parse a Python file and extract classes, functions, and imports."""
+    """parse a python file and extract classes, functions, and imports.
+
+    walks the ast tree to extract class definitions, function definitions,
+    and import statements.
+
+    arguments:
+        `path: Path`
+            path to the python file to parse
+
+    returns:
+        `ParsedCode`
+            structured representation of the parsed file
+    """
     content = path.read_text()
     tree = ast.parse(content)
 
@@ -227,7 +282,19 @@ def parse_file(path: Path) -> ParsedCode:
 
 
 def _extract_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> FunctionSignature:
-    """Extract function signature from AST node."""
+    """extract function signature from ast node.
+
+    extracts parameter names, types, and defaults, return type, and raised
+    exceptions from a function or async function definition.
+
+    arguments:
+        `node: ast.FunctionDef | ast.AsyncFunctionDef`
+            function or async function node
+
+    returns:
+        `FunctionSignature`
+            structured representation of the function signature
+    """
     parameters = {}
 
     for arg in node.args.posonlyargs:
@@ -284,14 +351,37 @@ def _extract_function_signature(node: ast.FunctionDef | ast.AsyncFunctionDef) ->
 
 
 def get_docstring_from_node(node: ast.AST) -> str | None:
-    """Get docstring from AST node."""
+    """get docstring from ast node.
+
+    returns the docstring for module, class, function, or async function nodes.
+
+    arguments:
+        `node: ast.AST`
+            ast node to get docstring from
+
+    returns:
+        `str | None`
+            docstring text or none if not found
+    """
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)):
         return ast.get_docstring(node)
     return None
 
 
 def find_third_party_references(parsed: ParsedCode) -> set[str]:
-    """Find third-party module references from parsed code."""
+    """find third-party module references from parsed code.
+
+    scans class base classes to find references to external modules that are not
+    part of the typing module.
+
+    arguments:
+        `parsed: ParsedCode`
+            parsed code structure
+
+    returns:
+        `set[str]`
+            set of third-party module references
+    """
     refs = set()
 
     for class_sig in parsed.classes:

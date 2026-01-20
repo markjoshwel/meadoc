@@ -1,4 +1,11 @@
-"""Checker for linting docstrings."""
+"""checker for linting docstrings.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 import ast
 from pathlib import Path
@@ -9,7 +16,21 @@ from meadow.parser import get_docstring_from_node, parse_file, parse_docstring
 
 
 def check_file(path: Path, config: Config) -> list[LintIssue]:
-    """Check a Python file for docstring issues."""
+    """check a python file for docstring issues.
+
+    checks for missing, malformed, and outdated docstrings in functions
+    and classes.
+
+    arguments:
+        `path: Path`
+            path to the python file to check
+        `config: Config`
+            configuration with ignore rules
+
+    returns:
+        `list[LintIssue]`
+            sorted list of lint issues found
+    """
     issues = []
 
     try:
@@ -21,7 +42,7 @@ def check_file(path: Path, config: Config) -> list[LintIssue]:
                 code=ErrorCode.MALFORMED,
                 line=e.lineno or 1,
                 column=e.offset or 1,
-                message=f"Syntax error: {e.msg}",
+                message=f"syntax error: {e.msg}",
             )
         ]
 
@@ -40,7 +61,25 @@ def _check_function(
     path: Path,
     config: Config,
 ) -> list[LintIssue]:
-    """Check a function for docstring issues."""
+    """check a function for docstring issues.
+
+    validates docstring presence, format, and parameter matching against
+    function signature.
+
+    arguments:
+        `node: ast.FunctionDef | ast.AsyncFunctionDef`
+            function or async function node
+        `parsed: ParsedCode`
+            parsed code structure
+        `path: Path`
+            file path (unused in current implementation)
+        `config: Config`
+            configuration with ignore rules
+
+    returns:
+        `list[LintIssue]`
+            list of lint issues found
+    """
     issues = []
 
     docstring = get_docstring_from_node(node)
@@ -100,7 +139,25 @@ def _check_class(
     path: Path,
     config: Config,
 ) -> list[LintIssue]:
-    """Check a class for docstring issues."""
+    """check a class for docstring issues.
+
+    validates docstring presence, format, and attribute matching against
+    class definition.
+
+    arguments:
+        `node: ast.ClassDef`
+            class definition node
+        `parsed: ParsedCode`
+            parsed code structure
+        `path: Path`
+            file path (unused in current implementation)
+        `config: Config`
+            configuration with ignore rules
+
+    returns:
+        `list[LintIssue]`
+            list of lint issues found
+    """
     issues = []
 
     docstring = get_docstring_from_node(node)
@@ -159,5 +216,18 @@ def _check_class(
 
 
 def format_issue(issue: LintIssue, file_path: Path) -> str:
-    """Format a lint issue for output."""
+    """format a lint issue for output.
+
+    formats a lint issue into a string suitable for console output.
+
+    arguments:
+        `issue: LintIssue`
+            lint issue to format
+        `file_path: Path`
+            path to the source file
+
+    returns:
+        `str`
+            formatted issue string
+    """
     return f"{file_path}:{issue.line}:{issue.column}: {issue.code.value}: {issue.message}"

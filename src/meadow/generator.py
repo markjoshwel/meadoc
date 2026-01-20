@@ -1,4 +1,11 @@
-"""Generator for creating markdown API documentation."""
+"""generator for creating markdown api documentation.
+
+arguments:
+    `none`
+
+returns:
+    `none`
+"""
 
 import re
 from pathlib import Path
@@ -15,25 +22,28 @@ def generate_markdown(
     insert_below_header: str | None = None,
     match_pattern: str | None = None,
 ) -> None:
-    """Generate markdown API documentation from source files.
+    """generate markdown api documentation from source files.
+
+    generates a table of contents and structured markdown documentation for
+    classes and functions matching the optional pattern.
 
     arguments:
         `files: list[Path]`
-            list of Python files to process
+            list of python files to process
         `config: Config`
             configuration options
         `output: Path | None = None`
-            output file path, or None for stdout
+            output file path, or none for stdout
         `insert_below_header: str | None = None`
             header text to insert content below in output file
         `match_pattern: str | None = None`
             pattern to filter classes/functions by name (glob or regex)
 
-    raises:
-        `FileNotFoundError`
-            if insert_below_header specified but header not found in output file
+    returns:
+        `none`
     """
     markdown_lines = ["## API Reference", "", ""]
+
     toc_items = []
 
     for file_path in files:
@@ -85,16 +95,20 @@ def generate_markdown(
 
 
 def _matches_pattern(name: str, pattern: str | None) -> bool:
-    """Check if name matches the given pattern.
+    """check if name matches the given pattern.
+
+    supports glob patterns (default) and regex patterns (if pattern
+    starts with `/`).
 
     arguments:
         `name: str`
             the name to check
-        `pattern: str | None`
+        `pattern: str | None = None`
             the pattern (glob or regex)
 
     returns:
-        True if name matches pattern or if no pattern is specified
+        `bool`
+            true if name matches pattern or if no pattern is specified
     """
     if not pattern:
         return True
@@ -109,7 +123,10 @@ def _matches_pattern(name: str, pattern: str | None) -> bool:
 
 
 def _generate_class_markdown(cls, config: Config) -> list[str]:
-    """Generate markdown for a class.
+    """generate markdown for a class.
+
+    creates a markdown section with class description, attributes, and methods.
+    applies type links from configuration where available.
 
     arguments:
         `cls`
@@ -118,7 +135,8 @@ def _generate_class_markdown(cls, config: Config) -> list[str]:
             configuration options
 
     returns:
-        list of markdown lines
+        `list[str]`
+            list of markdown lines
     """
     lines = [f"### class {cls.name}", ""]
     lines.append("Short description.")
@@ -137,13 +155,15 @@ def _generate_class_markdown(cls, config: Config) -> list[str]:
         for method in cls.methods:
             link = _get_type_link(f"def {method.name}", config)
             lines.append(f"  - [{method.name}](#def-{method.name.lower()})")
-        lines.append("")
 
     return lines
 
 
 def _generate_function_markdown(func: FunctionSignature, config: Config) -> list[str]:
-    """Generate markdown for a function.
+    """generate markdown for a function.
+
+    creates a markdown section with function description, parameters, return
+    type, and raised exceptions.
 
     arguments:
         `func: FunctionSignature`
@@ -152,7 +172,8 @@ def _generate_function_markdown(func: FunctionSignature, config: Config) -> list
             configuration options
 
     returns:
-        list of markdown lines
+        `list[str]`
+            list of markdown lines
     """
     lines = [f"### def {func.name}", ""]
     lines.append("Short description.")
@@ -183,7 +204,10 @@ def _generate_function_markdown(func: FunctionSignature, config: Config) -> list
 
 
 def _get_type_link(type_str: str, config: Config) -> str | None:
-    """Get markdown link for a type from config.
+    """get markdown link for a type from config.
+
+    searches the configuration's links dictionary for a matching pattern and
+    returns a formatted markdown link if found.
 
     arguments:
         `type_str: str`
@@ -192,7 +216,8 @@ def _get_type_link(type_str: str, config: Config) -> str | None:
             configuration options with links
 
     returns:
-        markdown link if found in config.links, otherwise None
+        `str | None`
+            markdown link if found in config.links, otherwise None
     """
     for pattern, url in config.links.items():
         if pattern in type_str:
