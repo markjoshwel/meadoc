@@ -14,6 +14,24 @@ from meadow.models import ErrorCode, LintIssue
 from meadow.parser import get_docstring_from_node, parse_file, parse_docstring
 
 
+def _read_file_text(path: Path) -> str:
+    """
+    read file text with utf-8 encoding
+
+    ensures consistent utf-8 encoding across all file reads
+    to avoid platform-specific encoding issues on windows
+
+    arguments:
+        `path: Path`
+            path to file to read
+
+    returns:
+        `str`
+            file content as string
+    """
+    return path.read_text(encoding="utf-8")
+
+
 def _parse_ignore_directive(source_line: str) -> list[ErrorCode] | None:
     """
     parse meadow ignore directive from source line.
@@ -97,9 +115,10 @@ def check_file(path: Path, config: Config) -> list[LintIssue]:
     issues = []
 
     try:
+        content = _read_file_text(path)
+        tree = ast.parse(content)
+        source_lines = content.splitlines()
         parsed = parse_file(path)
-        tree = ast.parse(path.read_text())
-        source_lines = path.read_text().splitlines()
     except SyntaxError as e:
         return [
             LintIssue(
