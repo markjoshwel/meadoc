@@ -229,7 +229,7 @@ wheels = [
 
 [[package]]
 name = "meadoc"
-version = "2026.2.16"
+version = "2026.2.161"
 source = { editable = "." }
 dependencies = [
     { name = "libsightseeing" },

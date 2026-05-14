@@ -39,6 +39,14 @@ class CodeElement:
             exception classes mentioned
         `ignore: bool`
             True if element has a # meadow: ignore comment
+        `insert_line: int`
+            1-indexed line to insert a missing docstring before
+        `docstring_start_line: int | None`
+            1-indexed first line of the existing docstring, if present
+        `docstring_end_line: int | None`
+            1-indexed final line of the existing docstring, if present
+        `docstring_indent: str`
+            indentation to use when writing this element's docstring
     """
 
     name: str
@@ -50,6 +58,10 @@ class CodeElement:
     attributes: list[tuple[str, str | None]] = field(default_factory=list)
     raises: list[str] = field(default_factory=list)
     ignore: bool = False
+    insert_line: int = 1
+    docstring_start_line: int | None = None
+    docstring_end_line: int | None = None
+    docstring_indent: str = ""
 
 
 def _has_ignore_comment(source_lines: list[str], end_lineno: int) -> bool:
@@ -120,6 +132,10 @@ def analyse_file(file_path: Path) -> list[CodeElement] | None:
             element_type="module",
             docstring=module_doc,
             line_number=1,
+            insert_line=1,
+            docstring_start_line=1 if module_doc else None,
+            docstring_end_line=_module_docstring_end_line(tree) if module_doc else None,
+            docstring_indent="",
         )
     )
 
@@ -146,6 +162,8 @@ def _analyse_class(node: ast.ClassDef, source_lines: list[str]) -> list[CodeElem
     """
     elements: list[CodeElement] = []
     class_doc = ast.get_docstring(node)
+    docstring_start_line: int | None = None
+    docstring_end_line: int | None = None
 
     # check for ignore comment on class
     class_ignore = False
@@ -153,6 +171,8 @@ def _analyse_class(node: ast.ClassDef, source_lines: list[str]) -> list[CodeElem
         # find end of docstring (docstring is first element in body)
         first_item = node.body[0]
         if isinstance(first_item, ast.Expr) and isinstance(first_item.value, ast.Constant):
+            docstring_start_line = first_item.lineno
+            docstring_end_line = first_item.end_lineno or first_item.lineno
             class_ignore = _has_ignore_comment(source_lines, first_item.end_lineno or node.lineno)
 
     # extract attributes from __init__ or class body
@@ -178,6 +198,10 @@ def _analyse_class(node: ast.ClassDef, source_lines: list[str]) -> list[CodeElem
         line_number=node.lineno,
         attributes=attributes,
         ignore=class_ignore,
+        insert_line=node.body[0].lineno if node.body else node.lineno + 1,
+        docstring_start_line=docstring_start_line,
+        docstring_end_line=docstring_end_line,
+        docstring_indent=_indent_for_body(node, source_lines),
     )
     elements.append(class_element)
     elements.extend(methods)
@@ -204,6 +228,8 @@ def _analyse_function(
         function or method element with extracted information
     """
     func_doc = ast.get_docstring(node)
+    docstring_start_line: int | None = None
+    docstring_end_line: int | None = None
 
     # check for ignore comment on function
     func_ignore = False
@@ -211,6 +237,8 @@ def _analyse_function(
         # find end of docstring (docstring is first element in body)
         first_item = node.body[0]
         if isinstance(first_item, ast.Expr) and isinstance(first_item.value, ast.Constant):
+            docstring_start_line = first_item.lineno
+            docstring_end_line = first_item.end_lineno or first_item.lineno
             func_ignore = _has_ignore_comment(source_lines, first_item.end_lineno or node.lineno)
 
     # extract arguments
@@ -264,7 +292,57 @@ def _analyse_function(
         arguments=arguments,
         return_annotation=return_ann,
         ignore=func_ignore,
+        insert_line=node.body[0].lineno if node.body else node.lineno + 1,
+        docstring_start_line=docstring_start_line,
+        docstring_end_line=docstring_end_line,
+        docstring_indent=_indent_for_body(node, source_lines or []),
     )
+
+
+def _module_docstring_end_line(tree: ast.Module) -> int | None:
+    """return the final line of a module docstring, if present
+
+    arguments:
+        `tree: ast.Module`
+            parsed module tree
+
+    returns: `int | None`
+        1-indexed final line of the module docstring, if present
+    """
+    if not tree.body:
+        return None
+
+    first_item = tree.body[0]
+    if isinstance(first_item, ast.Expr) and isinstance(first_item.value, ast.Constant):
+        return first_item.end_lineno or first_item.lineno
+
+    return None
+
+
+def _indent_for_body(
+    node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
+    source_lines: list[str],
+) -> str:
+    """return the indentation used by a class or function body
+
+    arguments:
+        `node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef`
+            node with a body
+        `source_lines: list[str]`
+            source code split into lines
+
+    returns: `str`
+        indentation string for the node body
+    """
+    if not node.body or not source_lines:
+        return " " * 4
+
+    body_line_index = node.body[0].lineno - 1
+    if body_line_index >= len(source_lines):
+        return " " * 4
+
+    line = source_lines[body_line_index]
+    return line[: len(line) - len(line.lstrip())]
 
 
 def _extract_init_attributes(

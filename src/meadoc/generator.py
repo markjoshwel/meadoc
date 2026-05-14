@@ -332,22 +332,107 @@ class DocstringUpdater:
         if elements is None:
             return result
 
+        replacements: list[tuple[int, int, list[str]]] = []
+        insertions: list[tuple[int, list[str]]] = []
+
         for element in elements:
             if not self._should_document(element):
                 continue
 
             if element.docstring is None:
                 # generate new docstring
-                _ = self.builder.build(element)
+                docstring = self.builder.build(element)
+                insertions.append(
+                    (
+                        element.insert_line,
+                        self._render_docstring(docstring, element.docstring_indent),
+                    )
+                )
                 result["generated"] += 1
             elif fix_malformed:
                 # update existing
-                _ = self.builder.build(element, element.docstring)
+                docstring = self.builder.build(element, element.docstring)
+                if element.docstring_start_line is None or element.docstring_end_line is None:
+                    result["skipped"] += 1
+                    continue
+                replacements.append(
+                    (
+                        element.docstring_start_line,
+                        element.docstring_end_line,
+                        self._render_docstring(docstring, element.docstring_indent),
+                    )
+                )
                 result["updated"] += 1
             else:
                 result["skipped"] += 1
 
+        if insertions or replacements:
+            self._write_changes(file_path, insertions, replacements)
+
         return result
+
+    def _render_docstring(self, content: str, indent: str) -> list[str]:
+        """render generated docstring content as source lines
+
+        arguments:
+            `content: str`
+                generated docstring content without quote delimiters
+            `indent: str`
+                indentation to apply to the docstring block
+
+        returns: `list[str]`
+            rendered source lines
+        """
+        content_lines = content.splitlines()
+        if not content_lines:
+            return [f'{indent}""""""']
+
+        rendered = [f'{indent}"""{content_lines[0]}']
+        rendered.extend(f"{indent}{line}" for line in content_lines[1:])
+        rendered.append(f'{indent}"""')
+        return rendered
+
+    def _write_changes(
+        self,
+        file_path: Path,
+        insertions: list[tuple[int, list[str]]],
+        replacements: list[tuple[int, int, list[str]]],
+    ) -> None:
+        """write generated docstring changes to a source file
+
+        arguments:
+            `file_path: Path`
+                path to python file
+            `insertions: list[tuple[int, list[str]]]`
+                1-indexed insertion line and source lines to insert
+            `replacements: list[tuple[int, int, list[str]]]`
+                1-indexed inclusive line range and source lines to replace
+
+        returns: `none`
+            no return value
+        """
+        source = file_path.read_text(encoding="utf-8")
+        has_trailing_newline = source.endswith(("\n", "\r"))
+        lines = source.splitlines()
+
+        for start_line, end_line, rendered in sorted(
+            replacements,
+            key=lambda item: item[0],
+            reverse=True,
+        ):
+            lines[start_line - 1 : end_line] = rendered
+
+        for insert_line, rendered in sorted(
+            insertions,
+            key=lambda item: item[0],
+            reverse=True,
+        ):
+            lines[insert_line - 1 : insert_line - 1] = rendered
+
+        _ = file_path.write_text(
+            "\n".join(lines) + ("\n" if has_trailing_newline else ""),
+            encoding="utf-8",
+        )
 
     def _should_document(self, element: CodeElement) -> bool:
         """check if an element should be documented
