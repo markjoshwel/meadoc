@@ -1,11 +1,12 @@
 [project]
 name = "meadoc"
-version = "2026.2.161"
+version = "2026.5.15"
 description = "a docstring machine based on typing information for the meadow Docstring Format"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "libsightseeing>=0.2.0",
+    "typing-extensions>=4.15.0",
     "tomlkit>=0.14.0",
 ]
 
@@ -26,7 +27,7 @@ dev = [
     "beautifulsoup4>=4.14.3",
     "mypy>=1.19.1",
     "pytest>=9.0.2",
-    "raiseattention>=2026.2.141",
+    "raiseattention>=2026.2.141; python_version >= '3.11'",
     "requests>=2.32.5",
     "ruff>=0.15.1",
     "types-requests>=2.32.4.20260107",
@@ -46,7 +47,7 @@ exclude = [
     ".venv",
     "docs/ide_rendering_tests",
 ]
-pythonVersion = "3.13"
+pythonVersion = "3.10"
 pythonPlatform = "All"
 stubPath = "stubs"
 strict = ["src"]
@@ -61,7 +62,7 @@ exclude = [
     ".venv",
     "docs/ide_rendering_tests",
 ]
-target-version = "py313"
+target-version = "py310"
 line-length = 100
 indent-width = 4
 
